@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
   />
-  <title>Raphael Core Lite</title>
+  <title>Raphael Core</title>
   <style>
     * {
       box-sizing: border-box;
@@ -26,7 +26,6 @@
       --danger: #ff5f6d;
       --ok: #52d38b;
       --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-      --ring-glow: rgba(130, 92, 255, 0.45);
       --orb-core: radial-gradient(circle at 35% 30%, #d8cbff 0%, #9e84ff 22%, #6441ff 46%, #24145a 68%, #090914 100%);
     }
 
@@ -48,8 +47,7 @@
       inset: 0;
       pointer-events: none;
       opacity: 0.045;
-      background-image:
-        radial-gradient(rgba(255,255,255,0.35) 0.6px, transparent 0.6px);
+      background-image: radial-gradient(rgba(255,255,255,0.35) 0.6px, transparent 0.6px);
       background-size: 8px 8px;
       mix-blend-mode: soft-light;
     }
@@ -128,7 +126,7 @@
 
     .orb-zone {
       position: relative;
-      width: min(64vw, 300px);
+      width: min(64vw, 320px);
       aspect-ratio: 1 / 1;
       display: grid;
       place-items: center;
@@ -227,6 +225,9 @@
         inset -10px -18px 24px rgba(0,0,0,0.30);
       overflow: hidden;
       animation: orbPulse 3.8s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .orb::before {
@@ -250,6 +251,37 @@
         conic-gradient(from 140deg, transparent 0 8%, rgba(255,255,255,0.08) 10%, transparent 14%, transparent 50%, rgba(255,255,255,0.07) 55%, transparent 60%);
       filter: blur(4px);
       animation: shimmer 6s linear infinite;
+    }
+
+    .orb-overlay {
+      position: absolute;
+      inset: 18%;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .orb-text {
+      width: 100%;
+      max-width: 150px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(244, 247, 255, 0.92);
+      text-shadow: 0 0 12px rgba(0,0,0,0.5);
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 7;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .orb-text.thinking {
+      animation: pulseText 1.2s ease-in-out infinite;
+      letter-spacing: 0.8px;
+      font-weight: 700;
     }
 
     .particles {
@@ -436,6 +468,11 @@
       100% { transform: translate3d(var(--tx), var(--ty), 0) scale(1.2); opacity: 0; }
     }
 
+    @keyframes pulseText {
+      0%, 100% { opacity: 0.55; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+
     @media (max-width: 480px) {
       .app {
         padding: 10px;
@@ -466,6 +503,12 @@
       .msg {
         max-width: 92%;
       }
+
+      .orb-text {
+        max-width: 132px;
+        font-size: 11px;
+        -webkit-line-clamp: 7;
+      }
     }
   </style>
 </head>
@@ -476,7 +519,7 @@
     <div class="card topbar">
       <div class="brand">
         <div class="brand-title">Raphael Core</div>
-        <div class="brand-sub">Transcendent Sanctuary · Mobile Lite Build</div>
+        <div class="brand-sub">Transcendent Sanctuary · Orb Response Build</div>
       </div>
       <div class="chip-row">
         <div class="chip" id="statusChip"><span class="status-dot"></span>READY</div>
@@ -491,6 +534,9 @@
         <div class="outer-ring"></div>
         <div class="mid-ring"></div>
         <div class="orb" id="orb"></div>
+        <div class="orb-overlay">
+          <div class="orb-text" id="orbText">RAPHAEL ONLINE</div>
+        </div>
         <div class="particles" id="particles"></div>
       </div>
 
@@ -534,15 +580,15 @@
       </div>
 
       <div class="footer-note">
-        현재 버전은 폰 단독 배포용 압축판이다. 구조는 단일 파일이며, Gemini는 브라우저에서 직접 호출한다.
-        테스트 후에는 노출된 키를 폐기하고 다음 버전에서 서버 경유형으로 옮기는 게 맞다.
+        중앙 구체가 응답 생성 상태와 최종 응답을 직접 보여준다. 긴 답변은 아래 채팅창에 전체가 남고,
+        구체 안에는 핵심 응답만 요약되어 표시된다.
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_MESSAGES = "raphael_core_lite_messages_v2";
-    const STORAGE_API_KEY = "raphael_core_lite_api_key_v2";
+    const STORAGE_MESSAGES = "raphael_core_orb_messages_v3";
+    const STORAGE_API_KEY = "raphael_core_orb_api_key_v3";
 
     const messagesEl = document.getElementById("messages");
     const promptEl = document.getElementById("prompt");
@@ -556,6 +602,7 @@
     const statusChip = document.getElementById("statusChip");
     const latencyChip = document.getElementById("latencyChip");
     const orb = document.getElementById("orb");
+    const orbText = document.getElementById("orbText");
     const particlesEl = document.getElementById("particles");
 
     let chatHistory = JSON.parse(localStorage.getItem(STORAGE_MESSAGES) || "[]");
@@ -572,6 +619,27 @@
           ? "0 0 10px rgba(82, 211, 139, 0.45)"
           : "0 0 10px rgba(255, 95, 109, 0.45)";
       }
+    }
+
+    function setOrbMessage(text, isThinking = false) {
+      orbText.textContent = text || "";
+      if (isThinking) {
+        orbText.classList.add("thinking");
+      } else {
+        orbText.classList.remove("thinking");
+      }
+    }
+
+    function summarizeForOrb(text) {
+      if (!text) return "NO RESPONSE";
+      const clean = text
+        .replace(/\[EV\][\s\S]*/g, "")
+        .replace(/\[다음 행동\][\s\S]*/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (clean.length <= 90) return clean;
+      return clean.slice(0, 90).trim() + "...";
     }
 
     function renderMessages() {
@@ -645,10 +713,12 @@
       const key = apiKeyEl.value.trim();
       if (!key) {
         setStatus("KEY EMPTY", false);
+        setOrbMessage("API KEY REQUIRED");
         return;
       }
       localStorage.setItem(STORAGE_API_KEY, key);
       setStatus("KEY SAVED", true);
+      setOrbMessage("KEY LINKED");
     }
 
     function normalizeResponse(objOrText) {
@@ -682,7 +752,6 @@
       }
 
       localStorage.setItem(STORAGE_API_KEY, apiKey);
-
       const startedAt = performance.now();
 
       const historyContents = chatHistory.slice(-8).map((msg) => ({
@@ -692,7 +761,7 @@
 
       const systemText = `
 너는 Raphael Core Lite다.
-역할: 전략적 사고 보조, 응답 명확성, 상태 기반 반응.
+역할: 전략적 사고 보조, 상태 기반 반응, 짧고 선명한 응답.
 반드시 JSON으로만 응답:
 {
   "reply": "답변",
@@ -758,6 +827,7 @@
       pushMessage("user", text);
       promptEl.value = "";
       setStatus("THINKING", true);
+      setOrbMessage("SYNCING...\nTHINKING...", true);
 
       try {
         const result = await askGemini(text);
@@ -773,11 +843,14 @@
         }
 
         pushMessage("model", finalText);
+        setOrbMessage(summarizeForOrb(result.reply), false);
         setStatus("SYNCED", true);
       } catch (err) {
-        pushMessage("model", "오류: " + err.message);
+        const errorText = "오류: " + err.message;
+        pushMessage("model", errorText);
         setMood("rage");
         frameworkValue.textContent = "ERROR_STATE";
+        setOrbMessage("ERROR\n" + err.message, false);
         setStatus("ERROR", false);
       }
     }
@@ -792,11 +865,12 @@
       setMood("adaptive");
       frameworkValue.textContent = "RAPHAEL_LITE";
       latencyChip.textContent = "LAT -- ms";
+      setOrbMessage("MEMORY CLEARED");
       setStatus("CLEARED", true);
     });
 
     testBtn.addEventListener("click", () => {
-      submitMessage("연결 테스트. 현재 상태를 간단히 보고해.");
+      submitMessage("연결 테스트. 현재 상태를 짧게 보고해.");
     });
 
     promptEl.addEventListener("keydown", (e) => {
@@ -812,7 +886,11 @@
     setStatus("READY", true);
 
     if (chatHistory.length === 0) {
-      pushMessage("model", "Raphael Core Lite online.\nGemini API 키를 저장한 뒤 명령을 입력해라.");
+      pushMessage("model", "Raphael Core online.\nGemini API 키를 저장한 뒤 메시지를 입력해라.");
+      setOrbMessage("RAPHAEL ONLINE");
+    } else {
+      const lastModel = [...chatHistory].reverse().find((m) => m.role === "model");
+      setOrbMessage(lastModel ? summarizeForOrb(lastModel.text) : "RAPHAEL READY");
     }
   </script>
 </body>
