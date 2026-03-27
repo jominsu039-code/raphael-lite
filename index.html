@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
   />
-  <title>Raphael Core v2</title>
+  <title>Raphael Core v3 Evolution</title>
   <style>
     * {
       box-sizing: border-box;
@@ -293,7 +293,7 @@
 
     .orb-text {
       width: 100%;
-      max-width: 152px;
+      max-width: 154px;
       font-size: 12px;
       line-height: 1.45;
       color: rgba(244, 247, 255, 0.94);
@@ -570,7 +570,7 @@
     <div class="card topbar">
       <div class="brand">
         <div class="brand-title">Raphael Core</div>
-        <div class="brand-sub">v2 · Orb Typing · Signal Engine Lite · Mobile Build</div>
+        <div class="brand-sub">v3 · Evolution Memory · Auto Compression · Mobile Build</div>
       </div>
       <div class="chip-row">
         <div class="chip" id="statusChip"><span class="status-dot"></span>READY</div>
@@ -641,19 +641,20 @@
       </div>
 
       <div class="footer-note">
-        이 버전은 단일 파일 프론트엔드 완성본이다. 직접 Gemini 호출과 서버 전환 준비 구조가 같이 들어 있다.
-        서버 경유형은 `/api/raphael`만 만들면 바로 전환 가능하다.
+        긴 대화는 자동으로 압축되어 맥락을 유지한다. 사용자 성향과 반복 목표는 진화 메모리로 누적된다.
+        서버 경유형은 <code>/api/raphael</code>만 만들면 전환된다.
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_MESSAGES = "raphael_core_v2_messages";
-    const STORAGE_API_KEY = "raphael_core_v2_api_key";
-    const STORAGE_LAST_INPUT_TIME = "raphael_core_v2_last_input_time";
+    const STORAGE_MESSAGES = "raphael_core_v3_messages";
+    const STORAGE_API_KEY = "raphael_core_v3_api_key";
+    const STORAGE_LAST_INPUT_TIME = "raphael_core_v3_last_input_time";
+    const STORAGE_SUMMARY = "raphael_core_v3_summary";
+    const STORAGE_EVOLUTION = "raphael_core_v3_evolution";
+    const STORAGE_CORE_MEMORY = "raphael_core_v3_core_memory";
 
-    // "direct" = 브라우저가 Gemini 직접 호출
-    // "server" = /api/raphael 로 호출 (백엔드 준비되면 이걸로 바꾸면 됨)
     const API_MODE = "direct";
 
     const messagesEl = document.getElementById("messages");
@@ -679,10 +680,20 @@
     const actionSub = document.getElementById("actionSub");
 
     let chatHistory = JSON.parse(localStorage.getItem(STORAGE_MESSAGES) || "[]");
+    let conversationSummary = localStorage.getItem(STORAGE_SUMMARY) || "";
+    let evolutionMemory = JSON.parse(localStorage.getItem(STORAGE_EVOLUTION) || '{"principles":[],"patterns":[],"goals":[],"styleHints":[]}');
+    let coreMemory = JSON.parse(localStorage.getItem(STORAGE_CORE_MEMORY) || '{"facts":[],"preferences":[],"constraints":[]}');
     let typingToken = 0;
 
     const savedKey = localStorage.getItem(STORAGE_API_KEY);
     if (savedKey) apiKeyEl.value = savedKey;
+
+    function persistAll() {
+      localStorage.setItem(STORAGE_MESSAGES, JSON.stringify(chatHistory));
+      localStorage.setItem(STORAGE_SUMMARY, conversationSummary || "");
+      localStorage.setItem(STORAGE_EVOLUTION, JSON.stringify(evolutionMemory));
+      localStorage.setItem(STORAGE_CORE_MEMORY, JSON.stringify(coreMemory));
+    }
 
     function setStatus(text, ok = true) {
       statusChip.innerHTML = '<span class="status-dot"></span>' + text;
@@ -954,6 +965,185 @@
       };
     }
 
+    function uniqLimit(arr, limit = 12) {
+      return [...new Set(arr.filter(Boolean).map((v) => String(v).trim()).filter(Boolean))].slice(0, limit);
+    }
+
+    function heuristicExtractEvolution(userText, aiText) {
+      const goals = [...(evolutionMemory.goals || [])];
+      const principles = [...(evolutionMemory.principles || [])];
+      const patterns = [...(evolutionMemory.patterns || [])];
+      const styleHints = [...(evolutionMemory.styleHints || [])];
+
+      const preferences = [...(coreMemory.preferences || [])];
+      const constraints = [...(coreMemory.constraints || [])];
+      const facts = [...(coreMemory.facts || [])];
+
+      const t = `${userText}\n${aiText || ""}`;
+
+      if (/(빠르게|속도|빨리|시간없)/i.test(t)) styleHints.push("빠른 실행 선호");
+      if (/(완성본|전체코드|통째로|붙여넣)/i.test(t)) styleHints.push("부분 코드보다 전체 완성본 선호");
+      if (/(정체성|느낌|라파엘|오브)/i.test(t)) principles.push("중앙 코어 정체성 유지");
+      if (/(자동화|레버리지|시스템)/i.test(t)) principles.push("자동화와 시스템화 우선");
+      if (/(디버그|오류|에러)/i.test(t)) patterns.push("오류 발생 시 즉시 수정 루프 선호");
+      if (/(장기|진화|업그레이드)/i.test(t)) goals.push("장기 진화형 구조 선호");
+      if (/(폰|모바일)/i.test(t)) constraints.push("모바일 단독 사용 가능성 중요");
+      if (/(Gemini|API)/i.test(t)) facts.push("Gemini 연동 사용 중");
+      if (/(서버|보안|키 노출)/i.test(t)) goals.push("서버 경유 구조로 전환 필요");
+      if (/(요약|압축|맥락)/i.test(t)) principles.push("긴 대화 맥락 압축 유지 필요");
+
+      evolutionMemory = {
+        goals: uniqLimit(goals, 10),
+        principles: uniqLimit(principles, 12),
+        patterns: uniqLimit(patterns, 12),
+        styleHints: uniqLimit(styleHints, 10)
+      };
+
+      coreMemory = {
+        preferences: uniqLimit(preferences, 12),
+        constraints: uniqLimit(constraints, 12),
+        facts: uniqLimit(facts, 12)
+      };
+    }
+
+    function localCompressMessages(messages) {
+      if (!messages.length) return "";
+
+      const lines = [];
+      for (const msg of messages) {
+        const role = msg.role === "user" ? "USER" : "AI";
+        const text = String(msg.text || "").replace(/\s+/g, " ").trim();
+        if (!text) continue;
+        lines.push(`${role}: ${text.slice(0, 280)}`);
+      }
+
+      const joined = lines.join("\n");
+      if (joined.length <= 2200) return joined;
+      return joined.slice(0, 2200) + "\n[...compressed locally]";
+    }
+
+    function buildEvolutionContext() {
+      const e = evolutionMemory;
+      const c = coreMemory;
+
+      return [
+        c.facts?.length ? `[KNOWN FACTS]\n- ${c.facts.join("\n- ")}` : "",
+        c.constraints?.length ? `[CONSTRAINTS]\n- ${c.constraints.join("\n- ")}` : "",
+        c.preferences?.length ? `[PREFERENCES]\n- ${c.preferences.join("\n- ")}` : "",
+        e.goals?.length ? `[LONG-TERM GOALS]\n- ${e.goals.join("\n- ")}` : "",
+        e.principles?.length ? `[LEARNED PRINCIPLES]\n- ${e.principles.join("\n- ")}` : "",
+        e.patterns?.length ? `[BEHAVIOR PATTERNS]\n- ${e.patterns.join("\n- ")}` : "",
+        e.styleHints?.length ? `[STYLE HINTS]\n- ${e.styleHints.join("\n- ")}` : ""
+      ].filter(Boolean).join("\n\n");
+    }
+
+    function shouldCompressHistory() {
+      const totalChars = chatHistory.reduce((acc, m) => acc + (m.text?.length || 0), 0);
+      return chatHistory.length > 18 || totalChars > 6000;
+    }
+
+    async function maybeCompressHistory() {
+      if (!shouldCompressHistory()) return;
+
+      const older = chatHistory.slice(0, Math.max(0, chatHistory.length - 10));
+      const recent = chatHistory.slice(-10);
+
+      const localSummarySeed = localCompressMessages(older);
+      const key = apiKeyEl.value.trim();
+
+      if (!key || API_MODE !== "direct") {
+        conversationSummary = [
+          conversationSummary,
+          "[AUTO SUMMARY]",
+          localSummarySeed
+        ].filter(Boolean).join("\n\n").slice(-5000);
+        chatHistory = recent;
+        persistAll();
+        renderMessages();
+        return;
+      }
+
+      try {
+        const payload = {
+          system_instruction: {
+            parts: [{
+              text: `너는 Raphael Memory Compressor다.
+오래된 대화를 압축해 맥락 손실을 최소화하는 역할만 수행한다.
+반드시 JSON으로만 응답:
+{
+  "summary": "핵심 맥락 요약",
+  "facts": ["사실1"],
+  "preferences": ["선호1"],
+  "constraints": ["제약1"],
+  "goals": ["목표1"],
+  "principles": ["원칙1"]
+}`
+            }]
+          },
+          contents: [{
+            role: "user",
+            parts: [{
+              text:
+`[PREVIOUS SUMMARY]
+${conversationSummary || "(none)"}
+
+[OLDER MESSAGES]
+${localSummarySeed}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 500,
+            responseMimeType: "application/json"
+          }
+        };
+
+        const res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(key),
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || "compression failed");
+
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        const parsed = JSON.parse(raw);
+
+        conversationSummary = String(parsed.summary || localSummarySeed).slice(0, 5000);
+
+        coreMemory = {
+          facts: uniqLimit([...(coreMemory.facts || []), ...((parsed.facts || []).map(String))], 12),
+          preferences: uniqLimit([...(coreMemory.preferences || []), ...((parsed.preferences || []).map(String))], 12),
+          constraints: uniqLimit([...(coreMemory.constraints || []), ...((parsed.constraints || []).map(String))], 12)
+        };
+
+        evolutionMemory = {
+          goals: uniqLimit([...(evolutionMemory.goals || []), ...((parsed.goals || []).map(String))], 12),
+          principles: uniqLimit([...(evolutionMemory.principles || []), ...((parsed.principles || []).map(String))], 12),
+          patterns: uniqLimit(evolutionMemory.patterns || [], 12),
+          styleHints: uniqLimit(evolutionMemory.styleHints || [], 12)
+        };
+
+        chatHistory = recent;
+        persistAll();
+        renderMessages();
+      } catch {
+        conversationSummary = [
+          conversationSummary,
+          "[AUTO SUMMARY FALLBACK]",
+          localSummarySeed
+        ].filter(Boolean).join("\n\n").slice(-5000);
+
+        chatHistory = recent;
+        persistAll();
+        renderMessages();
+      }
+    }
+
     function saveKey() {
       const key = apiKeyEl.value.trim();
       if (!key) {
@@ -990,7 +1180,7 @@
       };
     }
 
-    async function callGeminiDirect(userText) {
+    async function callGeminiDirect(userText, signal) {
       const apiKey = apiKeyEl.value.trim();
       if (!apiKey) {
         throw new Error("API 키가 비어 있다");
@@ -999,14 +1189,24 @@
       localStorage.setItem(STORAGE_API_KEY, apiKey);
       const startedAt = performance.now();
 
-      const historyContents = chatHistory.slice(-8).map((msg) => ({
+      await maybeCompressHistory();
+
+      const recentMessages = chatHistory.slice(-10).map((msg) => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.text }]
       }));
 
+      const evolutionContext = buildEvolutionContext();
+
       const systemText = `
 너는 Raphael Core Lite다.
-역할: 전략적 사고 보조, 상태 기반 반응, 짧고 선명한 응답.
+역할:
+- 전략적 사고 보조
+- 상태 기반 반응
+- 사용자와의 반복 대화에서 학습된 원칙을 유지
+- 긴 맥락은 압축 요약을 활용해 일관성을 유지
+- 핵심은 선명하게, 실행은 바로 가능하게 제시
+
 반드시 JSON으로만 응답:
 {
   "reply": "답변",
@@ -1016,23 +1216,29 @@
   "ev_estimate": "예: P > 0.78",
   "cognitive_framework": "FRAME_NAME",
   "preemptive_suggestion": "다음 행동 제안"
-}
-`;
+}`;
+
+      const userContext = [
+        conversationSummary ? `[CONVERSATION SUMMARY]\n${conversationSummary}` : "",
+        evolutionContext ? `[EVOLUTION MEMORY]\n${evolutionContext}` : "",
+        signal ? `[SIGNAL]\n${JSON.stringify(signal)}` : "",
+        `[CURRENT INPUT]\n${userText}`
+      ].filter(Boolean).join("\n\n");
 
       const payload = {
         system_instruction: {
           parts: [{ text: systemText }]
         },
         contents: [
-          ...historyContents,
+          ...recentMessages,
           {
             role: "user",
-            parts: [{ text: userText }]
+            parts: [{ text: userContext }]
           }
         ],
         generationConfig: {
           temperature: 0.8,
-          maxOutputTokens: 700,
+          maxOutputTokens: 900,
           responseMimeType: "application/json"
         }
       };
@@ -1069,7 +1275,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userText,
-          history: chatHistory.slice(-8),
+          history: chatHistory.slice(-10),
+          summary: conversationSummary,
+          evolutionMemory,
+          coreMemory,
           signal
         })
       });
@@ -1088,7 +1297,7 @@
       if (API_MODE === "server") {
         return callRaphaelServer(userText, signal);
       }
-      return callGeminiDirect(userText);
+      return callGeminiDirect(userText, signal);
     }
 
     function buildFinalText(result) {
@@ -1126,11 +1335,14 @@
         const finalText = buildFinalText(result);
         pushMessage("model", finalText);
 
+        heuristicExtractEvolution(text, result.reply);
+        persistAll();
+
         await typeOrbMessage(summarizeForOrb(result.reply), 16);
 
         showActionCard(
           result.preemptive_suggestion || "추가 행동 없음",
-          `EV: ${result.ev_estimate || "unknown"} · Mood: ${finalMood}`
+          `EV: ${result.ev_estimate || "unknown"} · Mood: ${finalMood} · Summary: ${conversationSummary ? "loaded" : "none"}`
         );
 
         setStatus("SYNCED", true);
@@ -1150,7 +1362,15 @@
 
     clearBtn.addEventListener("click", async () => {
       chatHistory = [];
+      conversationSummary = "";
+      evolutionMemory = { principles: [], patterns: [], goals: [], styleHints: [] };
+      coreMemory = { facts: [], preferences: [], constraints: [] };
+
       localStorage.removeItem(STORAGE_MESSAGES);
+      localStorage.removeItem(STORAGE_SUMMARY);
+      localStorage.removeItem(STORAGE_EVOLUTION);
+      localStorage.removeItem(STORAGE_CORE_MEMORY);
+
       renderMessages();
       applyMoodEffects("adaptive", 0.5);
       frameworkValue.textContent = "RAPHAEL_LITE";
@@ -1177,13 +1397,15 @@
     setStatus("READY", true);
 
     if (chatHistory.length === 0) {
-      pushMessage("model", "Raphael Core v2 online.\nAPI 키를 저장한 뒤 메시지를 입력해라.");
+      pushMessage("model", "Raphael Core v3 online.\nAPI 키를 저장한 뒤 메시지를 입력해라.");
       setOrbMessage("RAPHAEL ONLINE");
       frameworkValue.textContent = "WAITING_FOR_API_KEY";
       signalValue.textContent = "idle";
     } else {
       const lastModel = [...chatHistory].reverse().find((m) => m.role === "model");
       setOrbMessage(lastModel ? summarizeForOrb(lastModel.text) : "RAPHAEL READY");
+      frameworkValue.textContent = conversationSummary ? "SUMMARY_ACTIVE" : "RAPHAEL_LITE";
+      signalValue.textContent = evolutionMemory.principles?.length ? "evolution active" : "idle";
     }
   </script>
 </body>
