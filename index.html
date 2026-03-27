@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
   />
-  <title>Raphael Core</title>
+  <title>Raphael Core v2</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,31 +14,47 @@
     }
 
     :root {
-      --bg-0: #04050a;
-      --bg-1: #0a0b15;
-      --panel: rgba(255, 255, 255, 0.06);
-      --panel-2: rgba(255, 255, 255, 0.08);
-      --border: rgba(255, 255, 255, 0.10);
       --text: #f3f6ff;
       --muted: rgba(243, 246, 255, 0.66);
-      --accent: #8d6bff;
-      --accent-2: #5a36ff;
-      --danger: #ff5f6d;
-      --ok: #52d38b;
+      --danger: #ff667a;
+      --ok: #56d78f;
       --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+
+      --bg-top: #06070d;
+      --bg-mid: #070911;
+      --bg-bottom: #04050a;
+
+      --panel-a: rgba(255,255,255,0.075);
+      --panel-b: rgba(255,255,255,0.045);
+      --border: rgba(255,255,255,0.10);
+
       --orb-core: radial-gradient(circle at 35% 30%, #d8cbff 0%, #9e84ff 22%, #6441ff 46%, #24145a 68%, #090914 100%);
+      --orb-glow: rgba(130, 92, 255, 0.45);
+      --ring-color: rgba(155, 132, 255, 0.42);
+      --mid-ring-color: rgba(196, 183, 255, 0.40);
+      --sigil-opacity: 0.35;
+      --halo-color: rgba(127, 98, 255, 0.22);
+
+      --outer-spin: 14s;
+      --mid-spin: 12s;
+      --sigil-spin: 24s;
+      --pulse-speed: 3.8s;
+      --orb-scale: 1;
+      --orb-brightness: 1;
+      --particle-opacity: 1;
+      --particle-size: 4px;
     }
 
     html, body {
       width: 100%;
       height: 100%;
       margin: 0;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
       background:
         radial-gradient(circle at 50% -10%, rgba(129, 93, 255, 0.18), transparent 36%),
         radial-gradient(circle at 85% 20%, rgba(82, 147, 255, 0.08), transparent 24%),
-        linear-gradient(180deg, #06070d 0%, #070911 30%, #04050a 100%);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 30%, var(--bg-bottom) 100%);
       overflow: hidden;
     }
 
@@ -57,7 +73,7 @@
       z-index: 1;
       width: 100%;
       height: 100dvh;
-      max-width: 900px;
+      max-width: 920px;
       margin: 0 auto;
       padding: 12px;
       display: grid;
@@ -66,7 +82,7 @@
     }
 
     .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.045));
+      background: linear-gradient(180deg, var(--panel-a), var(--panel-b));
       border: 1px solid var(--border);
       backdrop-filter: blur(18px);
       border-radius: 22px;
@@ -116,8 +132,18 @@
       white-space: nowrap;
     }
 
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(82, 211, 139, 0.45);
+    }
+
     .hero {
-      padding: 14px 14px 10px;
+      padding: 14px 14px 12px;
       display: grid;
       grid-template-columns: 1fr;
       gap: 14px;
@@ -126,7 +152,7 @@
 
     .orb-zone {
       position: relative;
-      width: min(64vw, 320px);
+      width: min(66vw, 330px);
       aspect-ratio: 1 / 1;
       display: grid;
       place-items: center;
@@ -136,44 +162,18 @@
       position: absolute;
       inset: 10%;
       border-radius: 50%;
-      background:
-        radial-gradient(circle, rgba(127, 98, 255, 0.22) 0%, rgba(127, 98, 255, 0.08) 38%, transparent 70%);
+      background: radial-gradient(circle, var(--halo-color) 0%, rgba(127, 98, 255, 0.08) 38%, transparent 70%);
       filter: blur(18px);
       transform: scale(1.1);
       animation: breathe 4.2s ease-in-out infinite;
     }
 
+    .sigil-ring,
     .outer-ring,
-    .mid-ring,
-    .sigil-ring {
+    .mid-ring {
       position: absolute;
       border-radius: 50%;
       pointer-events: none;
-    }
-
-    .outer-ring {
-      inset: 6%;
-      border: 2px solid rgba(155, 132, 255, 0.42);
-      box-shadow:
-        0 0 22px rgba(138, 101, 255, 0.35),
-        inset 0 0 18px rgba(163, 138, 255, 0.14);
-      animation: spin 14s linear infinite;
-    }
-
-    .outer-ring::before,
-    .outer-ring::after {
-      content: "";
-      position: absolute;
-      inset: -8px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.10);
-    }
-
-    .mid-ring {
-      inset: 14%;
-      border: 1px dashed rgba(196, 183, 255, 0.40);
-      animation: spinReverse 12s linear infinite;
-      opacity: 0.9;
     }
 
     .sigil-ring {
@@ -208,9 +208,34 @@
           rgba(214, 205, 255, 0.55) 344deg 346deg,
           transparent 346deg 360deg
         );
-      opacity: 0.35;
-      animation: spin 24s linear infinite;
+      opacity: var(--sigil-opacity);
+      animation: spin var(--sigil-spin) linear infinite;
       filter: drop-shadow(0 0 12px rgba(164, 132, 255, 0.25));
+    }
+
+    .outer-ring {
+      inset: 6%;
+      border: 2px solid var(--ring-color);
+      box-shadow:
+        0 0 22px var(--orb-glow),
+        inset 0 0 18px rgba(163, 138, 255, 0.14);
+      animation: spin var(--outer-spin) linear infinite;
+    }
+
+    .outer-ring::before,
+    .outer-ring::after {
+      content: "";
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .mid-ring {
+      inset: 14%;
+      border: 1px dashed var(--mid-ring-color);
+      animation: spinReverse var(--mid-spin) linear infinite;
+      opacity: 0.9;
     }
 
     .orb {
@@ -219,12 +244,14 @@
       border-radius: 50%;
       background: var(--orb-core);
       box-shadow:
-        0 0 24px rgba(127, 98, 255, 0.48),
+        0 0 24px var(--orb-glow),
         0 0 60px rgba(107, 67, 255, 0.18),
         inset 0 0 24px rgba(255,255,255,0.12),
         inset -10px -18px 24px rgba(0,0,0,0.30);
       overflow: hidden;
-      animation: orbPulse 3.8s ease-in-out infinite;
+      animation: orbPulse var(--pulse-speed) ease-in-out infinite;
+      transform: scale(var(--orb-scale));
+      filter: brightness(var(--orb-brightness));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -266,12 +293,13 @@
 
     .orb-text {
       width: 100%;
-      max-width: 150px;
+      max-width: 152px;
       font-size: 12px;
       line-height: 1.45;
-      color: rgba(244, 247, 255, 0.92);
+      color: rgba(244, 247, 255, 0.94);
       text-shadow: 0 0 12px rgba(0,0,0,0.5);
       word-break: break-word;
+      white-space: pre-wrap;
       display: -webkit-box;
       -webkit-line-clamp: 7;
       -webkit-box-orient: vertical;
@@ -292,18 +320,19 @@
 
     .particle {
       position: absolute;
-      width: 4px;
-      height: 4px;
+      width: var(--particle-size);
+      height: var(--particle-size);
       border-radius: 50%;
-      background: rgba(220, 213, 255, 0.82);
+      background: rgba(220, 213, 255, 0.84);
       box-shadow: 0 0 10px rgba(182, 157, 255, 0.45);
       animation: floatParticle linear infinite;
+      opacity: var(--particle-opacity);
     }
 
     .core-readout {
       width: 100%;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
     }
 
@@ -340,7 +369,7 @@
       max-width: 88%;
       padding: 12px 14px;
       border-radius: 18px;
-      line-height: 1.48;
+      line-height: 1.5;
       font-size: 14px;
       white-space: pre-wrap;
       word-break: break-word;
@@ -415,21 +444,41 @@
       color: var(--text);
     }
 
+    .action-card {
+      display: none;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+      gap: 8px;
+    }
+
+    .action-card.show {
+      display: grid;
+    }
+
+    .action-title {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .action-main {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .action-sub {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
     .footer-note {
       font-size: 11px;
       color: var(--muted);
       line-height: 1.45;
       padding: 0 2px;
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 6px;
-      background: var(--ok);
-      box-shadow: 0 0 10px rgba(82, 211, 139, 0.45);
     }
 
     @keyframes spin {
@@ -448,8 +497,8 @@
     }
 
     @keyframes orbPulse {
-      0%, 100% { transform: scale(0.985); }
-      50% { transform: scale(1.02); }
+      0%, 100% { transform: scale(calc(var(--orb-scale) * 0.985)); }
+      50% { transform: scale(calc(var(--orb-scale) * 1.02)); }
     }
 
     @keyframes shimmer {
@@ -464,13 +513,19 @@
 
     @keyframes floatParticle {
       0% { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0; }
-      20% { opacity: 0.9; }
+      20% { opacity: var(--particle-opacity); }
       100% { transform: translate3d(var(--tx), var(--ty), 0) scale(1.2); opacity: 0; }
     }
 
     @keyframes pulseText {
       0%, 100% { opacity: 0.55; transform: scale(0.98); }
       50% { opacity: 1; transform: scale(1.02); }
+    }
+
+    @media (max-width: 620px) {
+      .core-readout {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 480px) {
@@ -485,10 +540,6 @@
 
       .brand-title {
         font-size: 17px;
-      }
-
-      .core-readout {
-        grid-template-columns: 1fr;
       }
 
       .api-row,
@@ -519,7 +570,7 @@
     <div class="card topbar">
       <div class="brand">
         <div class="brand-title">Raphael Core</div>
-        <div class="brand-sub">Transcendent Sanctuary · Orb Response Build</div>
+        <div class="brand-sub">v2 · Orb Typing · Signal Engine Lite · Mobile Build</div>
       </div>
       <div class="chip-row">
         <div class="chip" id="statusChip"><span class="status-dot"></span>READY</div>
@@ -549,12 +600,22 @@
           <div class="readout-label">COGNITIVE FRAMEWORK</div>
           <div class="readout-value" id="frameworkValue">RAPHAEL_LITE</div>
         </div>
+        <div class="readout">
+          <div class="readout-label">SIGNAL ENGINE</div>
+          <div class="readout-value" id="signalValue">idle</div>
+        </div>
       </div>
     </div>
 
     <div class="card messages" id="messages"></div>
 
     <div class="card composer">
+      <div class="action-card" id="actionCard">
+        <div class="action-title">NEXT ACTION</div>
+        <div class="action-main" id="actionMain">-</div>
+        <div class="action-sub" id="actionSub">-</div>
+      </div>
+
       <div class="api-row">
         <input
           id="apiKey"
@@ -580,15 +641,20 @@
       </div>
 
       <div class="footer-note">
-        중앙 구체가 응답 생성 상태와 최종 응답을 직접 보여준다. 긴 답변은 아래 채팅창에 전체가 남고,
-        구체 안에는 핵심 응답만 요약되어 표시된다.
+        이 버전은 단일 파일 프론트엔드 완성본이다. 직접 Gemini 호출과 서버 전환 준비 구조가 같이 들어 있다.
+        서버 경유형은 `/api/raphael`만 만들면 바로 전환 가능하다.
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_MESSAGES = "raphael_core_orb_messages_v3";
-    const STORAGE_API_KEY = "raphael_core_orb_api_key_v3";
+    const STORAGE_MESSAGES = "raphael_core_v2_messages";
+    const STORAGE_API_KEY = "raphael_core_v2_api_key";
+    const STORAGE_LAST_INPUT_TIME = "raphael_core_v2_last_input_time";
+
+    // "direct" = 브라우저가 Gemini 직접 호출
+    // "server" = /api/raphael 로 호출 (백엔드 준비되면 이걸로 바꾸면 됨)
+    const API_MODE = "direct";
 
     const messagesEl = document.getElementById("messages");
     const promptEl = document.getElementById("prompt");
@@ -597,15 +663,23 @@
     const sendBtn = document.getElementById("sendBtn");
     const clearBtn = document.getElementById("clearBtn");
     const testBtn = document.getElementById("testBtn");
+
     const moodValue = document.getElementById("moodValue");
     const frameworkValue = document.getElementById("frameworkValue");
+    const signalValue = document.getElementById("signalValue");
+
     const statusChip = document.getElementById("statusChip");
     const latencyChip = document.getElementById("latencyChip");
     const orb = document.getElementById("orb");
     const orbText = document.getElementById("orbText");
     const particlesEl = document.getElementById("particles");
 
+    const actionCard = document.getElementById("actionCard");
+    const actionMain = document.getElementById("actionMain");
+    const actionSub = document.getElementById("actionSub");
+
     let chatHistory = JSON.parse(localStorage.getItem(STORAGE_MESSAGES) || "[]");
+    let typingToken = 0;
 
     const savedKey = localStorage.getItem(STORAGE_API_KEY);
     if (savedKey) apiKeyEl.value = savedKey;
@@ -619,27 +693,6 @@
           ? "0 0 10px rgba(82, 211, 139, 0.45)"
           : "0 0 10px rgba(255, 95, 109, 0.45)";
       }
-    }
-
-    function setOrbMessage(text, isThinking = false) {
-      orbText.textContent = text || "";
-      if (isThinking) {
-        orbText.classList.add("thinking");
-      } else {
-        orbText.classList.remove("thinking");
-      }
-    }
-
-    function summarizeForOrb(text) {
-      if (!text) return "NO RESPONSE";
-      const clean = text
-        .replace(/\[EV\][\s\S]*/g, "")
-        .replace(/\[다음 행동\][\s\S]*/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (clean.length <= 90) return clean;
-      return clean.slice(0, 90).trim() + "...";
     }
 
     function renderMessages() {
@@ -659,54 +712,246 @@
       renderMessages();
     }
 
-    function createParticles() {
+    function setOrbMessage(text, isThinking = false) {
+      typingToken++;
+      orbText.textContent = text || "";
+      if (isThinking) orbText.classList.add("thinking");
+      else orbText.classList.remove("thinking");
+    }
+
+    async function typeOrbMessage(text, speed = 18) {
+      typingToken++;
+      const currentToken = typingToken;
+      orbText.classList.remove("thinking");
+      orbText.textContent = "";
+
+      const finalText = text || "";
+      for (let i = 0; i < finalText.length; i++) {
+        if (currentToken !== typingToken) return;
+        orbText.textContent += finalText[i];
+        await new Promise((resolve) => setTimeout(resolve, speed));
+      }
+    }
+
+    function summarizeForOrb(text) {
+      if (!text) return "NO RESPONSE";
+      const clean = text
+        .replace(/\[EV\][\s\S]*/g, "")
+        .replace(/\[다음 행동\][\s\S]*/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (clean.length <= 88) return clean;
+      return clean.slice(0, 88).trim() + "...";
+    }
+
+    function showActionCard(main, sub) {
+      if (!main && !sub) {
+        actionCard.classList.remove("show");
+        return;
+      }
+      actionMain.textContent = main || "-";
+      actionSub.textContent = sub || "";
+      actionCard.classList.add("show");
+    }
+
+    function createParticles(count = 18, speedBias = 1, spread = 40) {
       particlesEl.innerHTML = "";
-      for (let i = 0; i < 18; i++) {
+      for (let i = 0; i < count; i++) {
         const p = document.createElement("div");
         p.className = "particle";
         p.style.left = (50 + (Math.random() * 54 - 27)) + "%";
         p.style.top = (50 + (Math.random() * 54 - 27)) + "%";
-        p.style.setProperty("--tx", (Math.random() * 80 - 40) + "px");
-        p.style.setProperty("--ty", (Math.random() * 80 - 40) + "px");
-        p.style.animationDuration = (2.8 + Math.random() * 3.6) + "s";
+        p.style.setProperty("--tx", (Math.random() * spread * 2 - spread) + "px");
+        p.style.setProperty("--ty", (Math.random() * spread * 2 - spread) + "px");
+        p.style.animationDuration = ((2.8 + Math.random() * 3.6) / speedBias) + "s";
         p.style.animationDelay = (Math.random() * 2.5) + "s";
         particlesEl.appendChild(p);
       }
     }
 
-    function setMood(mood) {
-      const palettes = {
+    function applyMoodEffects(mood, intensity = 0.5) {
+      const root = document.documentElement;
+
+      const configs = {
         focus: {
           core: "radial-gradient(circle at 35% 30%, #d7fbff 0%, #92ebff 22%, #39b8ff 44%, #103d8b 68%, #071220 100%)",
-          glow: "rgba(70, 190, 255, 0.42)"
+          glow: "rgba(70, 190, 255, 0.42)",
+          ring: "rgba(124, 208, 255, 0.42)",
+          midRing: "rgba(173, 229, 255, 0.42)",
+          halo: "rgba(70, 190, 255, 0.18)",
+          particles: 14,
+          particleSize: "3px",
+          particleOpacity: 0.82,
+          outerSpin: "18s",
+          midSpin: "15s",
+          sigilSpin: "28s",
+          pulse: "4.3s",
+          scale: 0.99 + intensity * 0.02,
+          bright: 0.98 + intensity * 0.08
         },
         ascend: {
           core: "radial-gradient(circle at 35% 30%, #fff8db 0%, #ffe9a4 20%, #ffc45d 42%, #8e5b14 68%, #1a1208 100%)",
-          glow: "rgba(255, 191, 95, 0.40)"
+          glow: "rgba(255, 191, 95, 0.42)",
+          ring: "rgba(255, 210, 120, 0.44)",
+          midRing: "rgba(255, 235, 180, 0.45)",
+          halo: "rgba(255, 202, 118, 0.22)",
+          particles: 24,
+          particleSize: "4px",
+          particleOpacity: 0.95,
+          outerSpin: "11s",
+          midSpin: "10s",
+          sigilSpin: "18s",
+          pulse: "3.0s",
+          scale: 1 + intensity * 0.04,
+          bright: 1.04 + intensity * 0.16
         },
         calm: {
           core: "radial-gradient(circle at 35% 30%, #e1ffe7 0%, #8bf2ba 22%, #38b772 44%, #0d5032 68%, #08150f 100%)",
-          glow: "rgba(78, 214, 141, 0.36)"
+          glow: "rgba(78, 214, 141, 0.36)",
+          ring: "rgba(94, 219, 149, 0.38)",
+          midRing: "rgba(175, 246, 204, 0.40)",
+          halo: "rgba(103, 226, 161, 0.16)",
+          particles: 12,
+          particleSize: "3px",
+          particleOpacity: 0.75,
+          outerSpin: "20s",
+          midSpin: "18s",
+          sigilSpin: "30s",
+          pulse: "5.1s",
+          scale: 0.985 + intensity * 0.02,
+          bright: 0.97 + intensity * 0.06
         },
         rage: {
           core: "radial-gradient(circle at 35% 30%, #ffd3c7 0%, #ff8b6f 22%, #ff4f2b 44%, #6a190f 68%, #160909 100%)",
-          glow: "rgba(255, 96, 66, 0.38)"
+          glow: "rgba(255, 96, 66, 0.42)",
+          ring: "rgba(255, 122, 98, 0.44)",
+          midRing: "rgba(255, 190, 175, 0.42)",
+          halo: "rgba(255, 96, 66, 0.22)",
+          particles: 28,
+          particleSize: "4.5px",
+          particleOpacity: 1,
+          outerSpin: "8s",
+          midSpin: "7s",
+          sigilSpin: "12s",
+          pulse: "2.2s",
+          scale: 1 + intensity * 0.06,
+          bright: 1.02 + intensity * 0.22
         },
         tired: {
           core: "radial-gradient(circle at 35% 30%, #e4e4ff 0%, #afaed5 22%, #76719f 44%, #2d2a4e 68%, #0c0b16 100%)",
-          glow: "rgba(153, 149, 210, 0.28)"
+          glow: "rgba(153, 149, 210, 0.24)",
+          ring: "rgba(155, 151, 210, 0.30)",
+          midRing: "rgba(198, 194, 234, 0.30)",
+          halo: "rgba(145, 139, 198, 0.12)",
+          particles: 8,
+          particleSize: "3px",
+          particleOpacity: 0.55,
+          outerSpin: "24s",
+          midSpin: "22s",
+          sigilSpin: "36s",
+          pulse: "6.0s",
+          scale: 0.975 + intensity * 0.01,
+          bright: 0.88 + intensity * 0.05
         },
         adaptive: {
           core: "radial-gradient(circle at 35% 30%, #d8cbff 0%, #9e84ff 22%, #6441ff 46%, #24145a 68%, #090914 100%)",
-          glow: "rgba(130, 92, 255, 0.45)"
+          glow: "rgba(130, 92, 255, 0.45)",
+          ring: "rgba(155, 132, 255, 0.42)",
+          midRing: "rgba(196, 183, 255, 0.40)",
+          halo: "rgba(127, 98, 255, 0.22)",
+          particles: 18,
+          particleSize: "4px",
+          particleOpacity: 0.88,
+          outerSpin: "14s",
+          midSpin: "12s",
+          sigilSpin: "24s",
+          pulse: "3.8s",
+          scale: 1 + intensity * 0.03,
+          bright: 1 + intensity * 0.10
         }
       };
 
-      const picked = palettes[mood] || palettes.adaptive;
-      orb.style.background = picked.core;
-      orb.style.boxShadow =
-        "0 0 24px " + picked.glow + ", 0 0 60px rgba(107, 67, 255, 0.18), inset 0 0 24px rgba(255,255,255,0.12), inset -10px -18px 24px rgba(0,0,0,0.30)";
+      const c = configs[mood] || configs.adaptive;
+
+      root.style.setProperty("--orb-core", c.core);
+      root.style.setProperty("--orb-glow", c.glow);
+      root.style.setProperty("--ring-color", c.ring);
+      root.style.setProperty("--mid-ring-color", c.midRing);
+      root.style.setProperty("--halo-color", c.halo);
+      root.style.setProperty("--outer-spin", c.outerSpin);
+      root.style.setProperty("--mid-spin", c.midSpin);
+      root.style.setProperty("--sigil-spin", c.sigilSpin);
+      root.style.setProperty("--pulse-speed", c.pulse);
+      root.style.setProperty("--orb-scale", String(c.scale));
+      root.style.setProperty("--orb-brightness", String(c.bright));
+      root.style.setProperty("--particle-opacity", String(c.particleOpacity));
+      root.style.setProperty("--particle-size", c.particleSize);
+
       moodValue.textContent = mood || "adaptive";
+      createParticles(c.particles, Math.max(0.65, 0.65 + intensity), 38 + intensity * 22);
+    }
+
+    function getLastInputTime() {
+      return Number(localStorage.getItem(STORAGE_LAST_INPUT_TIME) || "0");
+    }
+
+    function setLastInputTime(ts) {
+      localStorage.setItem(STORAGE_LAST_INPUT_TIME, String(ts));
+    }
+
+    function analyzeSignal(text) {
+      const now = Date.now();
+      const prev = getLastInputTime();
+      const delta = prev ? now - prev : 999999;
+      setLastInputTime(now);
+
+      const trimmed = (text || "").trim();
+      const len = trimmed.length;
+      const exclam = (trimmed.match(/!/g) || []).length;
+      const questions = (trimmed.match(/\?/g) || []).length;
+      const urgencyWords = /(빨리|지금|급해|당장|서둘러|urgent|asap)/i.test(trimmed);
+      const fatigueWords = /(피곤|졸려|지침|힘들|귀찮|tired|exhausted)/i.test(trimmed);
+      const calmWords = /(천천히|정리|차분|calm|정돈)/i.test(trimmed);
+      const ascendWords = /(성장|확장|업그레이드|진화|ascend|improve)/i.test(trimmed);
+      const focusWords = /(분석|정리|구조|설계|코드|디버그|focus|optimize)/i.test(trimmed);
+
+      let mood = "adaptive";
+      let intensity = 0.45;
+
+      if (fatigueWords) {
+        mood = "tired";
+        intensity = 0.4;
+      } else if (urgencyWords || exclam >= 2) {
+        mood = "rage";
+        intensity = Math.min(1, 0.65 + exclam * 0.08);
+      } else if (calmWords) {
+        mood = "calm";
+        intensity = 0.42;
+      } else if (ascendWords) {
+        mood = "ascend";
+        intensity = 0.6;
+      } else if (focusWords || questions >= 1 || len > 45) {
+        mood = "focus";
+        intensity = 0.56;
+      }
+
+      if (delta < 8000) intensity = Math.min(1, intensity + 0.12);
+      if (len > 120) intensity = Math.min(1, intensity + 0.08);
+
+      const label = `${mood} · i:${intensity.toFixed(2)} · dt:${Math.round(delta / 1000)}s`;
+      signalValue.textContent = label;
+
+      return {
+        predictedMood: mood,
+        intensity,
+        inputLength: len,
+        deltaMs: delta,
+        exclamations: exclam,
+        questions,
+        urgencyWords,
+        fatigueWords
+      };
     }
 
     function saveKey() {
@@ -745,7 +990,7 @@
       };
     }
 
-    async function askGemini(userText) {
+    async function callGeminiDirect(userText) {
       const apiKey = apiKeyEl.value.trim();
       if (!apiKey) {
         throw new Error("API 키가 비어 있다");
@@ -796,16 +1041,12 @@
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey),
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         }
       );
 
-      const latency = Math.round(performance.now() - startedAt);
-      latencyChip.textContent = "LAT " + latency + " ms";
-
+      latencyChip.textContent = "LAT " + Math.round(performance.now() - startedAt) + " ms";
       const data = await res.json();
 
       if (!res.ok) {
@@ -820,37 +1061,86 @@
       }
     }
 
+    async function callRaphaelServer(userText, signal) {
+      const startedAt = performance.now();
+
+      const res = await fetch("/api/raphael", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userText,
+          history: chatHistory.slice(-8),
+          signal
+        })
+      });
+
+      latencyChip.textContent = "LAT " + Math.round(performance.now() - startedAt) + " ms";
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || ("HTTP " + res.status));
+      }
+
+      return normalizeResponse(data);
+    }
+
+    async function askRaphael(userText, signal) {
+      if (API_MODE === "server") {
+        return callRaphaelServer(userText, signal);
+      }
+      return callGeminiDirect(userText);
+    }
+
+    function buildFinalText(result) {
+      let finalText = result.reply || "응답 없음";
+      if (result.ev_estimate) {
+        finalText += "\n\n[EV] " + result.ev_estimate;
+      }
+      if (result.preemptive_suggestion) {
+        finalText += "\n\n[다음 행동] " + result.preemptive_suggestion;
+      }
+      return finalText;
+    }
+
     async function submitMessage(customText) {
       const text = (customText ?? promptEl.value).trim();
       if (!text) return;
 
+      const signal = analyzeSignal(text);
+      applyMoodEffects(signal.predictedMood, signal.intensity);
+
       pushMessage("user", text);
       promptEl.value = "";
+      showActionCard("PROCESSING INPUT", `Signal: ${signal.predictedMood} / intensity ${signal.intensity.toFixed(2)}`);
       setStatus("THINKING", true);
       setOrbMessage("SYNCING...\nTHINKING...", true);
 
       try {
-        const result = await askGemini(text);
-        setMood(result.mood);
+        const result = await askRaphael(text, signal);
+        const finalMood = result.mood || signal.predictedMood || "adaptive";
+        const finalIntensity = Math.min(1, Math.max(signal.intensity, Math.abs((result.sentiment ?? 0.5) - 0.5) * 1.6 + 0.35));
+
+        applyMoodEffects(finalMood, finalIntensity);
         frameworkValue.textContent = result.cognitive_framework || "RAPHAEL_LITE";
 
-        let finalText = result.reply || "응답 없음";
-        if (result.ev_estimate) {
-          finalText += "\n\n[EV] " + result.ev_estimate;
-        }
-        if (result.preemptive_suggestion) {
-          finalText += "\n\n[다음 행동] " + result.preemptive_suggestion;
-        }
-
+        const finalText = buildFinalText(result);
         pushMessage("model", finalText);
-        setOrbMessage(summarizeForOrb(result.reply), false);
+
+        await typeOrbMessage(summarizeForOrb(result.reply), 16);
+
+        showActionCard(
+          result.preemptive_suggestion || "추가 행동 없음",
+          `EV: ${result.ev_estimate || "unknown"} · Mood: ${finalMood}`
+        );
+
         setStatus("SYNCED", true);
       } catch (err) {
         const errorText = "오류: " + err.message;
         pushMessage("model", errorText);
-        setMood("rage");
+        applyMoodEffects("rage", 0.82);
         frameworkValue.textContent = "ERROR_STATE";
-        setOrbMessage("ERROR\n" + err.message, false);
+        await typeOrbMessage("ERROR\n" + err.message, 14);
+        showActionCard("오류 복구 필요", "API 키, 네트워크, quota, 또는 서버 라우트를 확인해라.");
         setStatus("ERROR", false);
       }
     }
@@ -858,19 +1148,21 @@
     saveKeyBtn.addEventListener("click", saveKey);
     sendBtn.addEventListener("click", () => submitMessage());
 
-    clearBtn.addEventListener("click", () => {
+    clearBtn.addEventListener("click", async () => {
       chatHistory = [];
       localStorage.removeItem(STORAGE_MESSAGES);
       renderMessages();
-      setMood("adaptive");
+      applyMoodEffects("adaptive", 0.5);
       frameworkValue.textContent = "RAPHAEL_LITE";
+      signalValue.textContent = "idle";
       latencyChip.textContent = "LAT -- ms";
-      setOrbMessage("MEMORY CLEARED");
+      showActionCard("", "");
       setStatus("CLEARED", true);
+      await typeOrbMessage("MEMORY CLEARED", 18);
     });
 
     testBtn.addEventListener("click", () => {
-      submitMessage("연결 테스트. 현재 상태를 짧게 보고해.");
+      submitMessage("연결 테스트. 현재 상태를 짧고 명확하게 보고해.");
     });
 
     promptEl.addEventListener("keydown", (e) => {
@@ -881,13 +1173,14 @@
     });
 
     renderMessages();
-    createParticles();
-    setMood("adaptive");
+    applyMoodEffects("adaptive", 0.5);
     setStatus("READY", true);
 
     if (chatHistory.length === 0) {
-      pushMessage("model", "Raphael Core online.\nGemini API 키를 저장한 뒤 메시지를 입력해라.");
+      pushMessage("model", "Raphael Core v2 online.\nAPI 키를 저장한 뒤 메시지를 입력해라.");
       setOrbMessage("RAPHAEL ONLINE");
+      frameworkValue.textContent = "WAITING_FOR_API_KEY";
+      signalValue.textContent = "idle";
     } else {
       const lastModel = [...chatHistory].reverse().find((m) => m.role === "model");
       setOrbMessage(lastModel ? summarizeForOrb(lastModel.text) : "RAPHAEL READY");
